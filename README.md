@@ -3,6 +3,7 @@ Demonstration of multiple Java microframeworks.
 Aim is to build Java application in a simple way, without having to select and use big frameworks.
 * Ninja Framework
 * Jooby
+* Pippo
 
 
 
@@ -27,7 +28,7 @@ know JPA very well, let's have a look at how we can use MongoDB.
 
 https://github.com/bihe/ninja-mongodb
 add maven dependency:
-<dependency>
+      <dependency>
           <groupId>net.binggl</groupId>
           <artifactId>ninja-mongodb-module</artifactId>
           <version>1.0.7</version>
@@ -138,6 +139,22 @@ db = "mongodb://localhost/mydb"
      <artifactId>jooby-jackson</artifactId>
    </dependency>
 
+   ```java
+   @Entity
+public class Message {
+    private String content;
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+}
+   ```
+
+```java
    use(new Monphia());
         use(new Jackson());
 
@@ -153,7 +170,59 @@ db = "mongodb://localhost/mydb"
             ds.save(message);
             response.status(201);
         }).consumes(MediaType.json);
+```
 
+Modules demo:
+
+```java
+public class MessageDao implements Jooby.Module{
+
+    @Inject
+    Datastore datastore;
+
+    public void saveMessage(Message message){
+        datastore.save(message);
+    }
+
+    public List<Message> getMessages(){
+        return datastore.find(Message.class).asList();
+    }
+
+    @Override
+    public Config config() {
+        return ConfigFactory.parseResources(getClass(), "MessageDao.properties");
+    }
+
+    @Override
+    public void configure(Env env, Config config, Binder binder) throws Throwable {
+
+    }
+}
+```
+
+```java
+{
+  use(new Monphia());
+  use(new Jackson());
+  use(new MessageDao());
+
+  get("/", () -> "Hello World!");
+
+  get("/messages", () -> {
+    return require(MessageDao.class).getMessages();
+  });
+
+  post("/messages", (request, response) -> {
+    Message message = request.body().to(Message.class);
+    require(MessageDao.class).saveMessage(message);
+    response.status(201);
+  }).consumes(MediaType.json);
+}
+```
+
+
+
+//TODO: explain that yoiu can also do MVC style routes
 
 # Pippo
 mvn archetype:generate -DarchetypeGroupId=ro.pippo -DarchetypeArtifactId=pippo-quickstart -DarchetypeVersion=1.5.0

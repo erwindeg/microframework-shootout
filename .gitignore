@@ -20,3 +20,4 @@ input/
 taf.log
 **/*log
 .movie-client/node_modules
+demo/
